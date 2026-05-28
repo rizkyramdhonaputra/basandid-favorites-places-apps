@@ -19,6 +19,7 @@ class FavoritesPlacesNotifier
         name: place.name,
         description: place.description,
         rating: place.rating,
+        imagePath: place.imagePath,
       );
       return [...currentPlaces, newPlace];
     });

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/favoritesplaces_provider.dart';
 import '../routes/apps_routes.dart';
+import 'detailfavorite_screen.dart';
 
 class ListFavoriteScreen extends ConsumerWidget {
   const ListFavoriteScreen({super.key});
@@ -79,7 +80,7 @@ class ListFavoriteScreen extends ConsumerWidget {
         style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       ),
       content: Text(
-        'Are you sure you want to remove this place from favorites?',
+        'Are you sure you want to remove ${place.name} from favorites?',
         style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       ),
       actions: [
@@ -103,19 +104,32 @@ class ListFavoriteScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBody(BuildContext context, WidgetRef ref) {
+  void _navigateToDetail(BuildContext context, FavoritePlacesModels place) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetailFavoriteScreen(place: place),
+      ),
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    List<FavoritePlacesModels> listPlaces,
+  ) {
     final favoritesPlaces = ref.watch(favoritesPlacesProvider);
 
     return favoritesPlaces.when(
-      data: (places) {
-        if (places.isEmpty) {
+      data: (listPlaces) {
+        if (listPlaces.isEmpty) {
           return _buildEmptyState(context);
         }
 
         return ListView.builder(
-          itemCount: places.length,
+          itemCount: listPlaces.length,
           itemBuilder: (context, index) {
-            final place = places[index];
+            final place = listPlaces[index];
             return ListTile(
               title: Text(
                 place.name,
@@ -136,6 +150,7 @@ class ListFavoriteScreen extends ConsumerWidget {
                 ),
               ),
               onTap: () {
+                _navigateToDetail(context, place);
                 // Handle tap if needed
               },
               onLongPress: () {
@@ -161,7 +176,7 @@ class ListFavoriteScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: _buildAppBar(context, ref, favoritesPlaces.isLoading),
-      body: _buildBody(context, ref),
+      body: _buildBody(context, ref, favoritesPlaces.value ?? []),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, AppsRoutes.addPlace),
         child: const Icon(Icons.add),

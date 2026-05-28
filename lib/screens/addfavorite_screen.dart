@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:aplikasi_favoritesplaces/providers/favoritesplaces_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aplikasi_favoritesplaces/models/favoriteplaces_models.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
 class AddFavoriteScreen extends ConsumerStatefulWidget {
@@ -17,6 +20,8 @@ class _AddFavoriteScreenState extends ConsumerState<AddFavoriteScreen> {
   String _placeDescription = '';
   double _placeRating = 0.0;
   final uuid = const Uuid();
+  File? _placeImage;
+  final _imagePicker = ImagePicker();
 
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(title: const Text('Add Favorite Place'));
@@ -102,6 +107,94 @@ class _AddFavoriteScreenState extends ConsumerState<AddFavoriteScreen> {
     );
   }
 
+  Future<void> _pickGallery() async {
+    final pickedFile = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+    );
+    if (pickedFile != null) {
+      setState(() {
+        _placeImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _takePhoto() async {
+    final pickedFile = await _imagePicker.pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() {
+        _placeImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Widget _buildImageInput() {
+    return Container(
+      height: 150,
+      width: double.infinity,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: _placeImage != null
+          ? Stack(
+              children: [
+                Image.file(
+                  _placeImage!,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _placeImage = null;
+                      });
+                    },
+                    icon: Icon(Icons.refresh_outlined, color: Colors.white),
+                    label: Text('Reset', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton.icon(
+                  onPressed: _takePhoto,
+                  icon: Icon(
+                    Icons.camera_alt,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  label: Text(
+                    'Take Photo',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                TextButton.icon(
+                  onPressed: _pickGallery,
+                  icon: Icon(
+                    Icons.photo_library,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  label: Text(
+                    'Pick from Gallery',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
@@ -110,9 +203,10 @@ class _AddFavoriteScreenState extends ConsumerState<AddFavoriteScreen> {
         name: _placeName,
         description: _placeDescription,
         rating: _placeRating,
+        imagePath: _placeImage?.path,
       );
       ref.read(favoritesPlacesProvider.notifier).addFavoritePlace(newPlace);
-      Navigator.pop(context);
+      Navigator.pop(context, _placeName);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$_placeName added to favorites!')),
       );
@@ -140,6 +234,8 @@ class _AddFavoriteScreenState extends ConsumerState<AddFavoriteScreen> {
             _buildDescriptionField(),
             const SizedBox(height: 16),
             _buildRatingField(),
+            const SizedBox(height: 32),
+            _buildImageInput(),
             const SizedBox(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,

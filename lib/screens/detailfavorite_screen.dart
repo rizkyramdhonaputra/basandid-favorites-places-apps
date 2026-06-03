@@ -1,8 +1,8 @@
 import 'dart:io';
 
+import 'package:aplikasi_favoritesplaces/widgets/removeconfirmationdialog_widget.dart';
 import 'package:flutter/material.dart';
 import '../models/favoriteplaces_models.dart';
-import '../providers/favoritesplaces_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DetailFavoriteScreen extends ConsumerWidget {
@@ -10,21 +10,16 @@ class DetailFavoriteScreen extends ConsumerWidget {
 
   final FavoritePlacesModels place;
 
-  void _removeFromFavorites(BuildContext context, WidgetRef ref) {
-    ref.read(favoritesPlacesProvider.notifier).removeFavoritePlace(place.id);
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${place.name} removed from favorites')),
-    );
-  }
-
   AppBar _buildAppBar(BuildContext context, WidgetRef ref) {
     return AppBar(
       title: Text(place.name),
       actions: [
         IconButton(
           icon: const Icon(Icons.delete_forever_rounded),
-          onPressed: () => _removeFromFavorites(context, ref),
+          onPressed: () => showDialog(
+            context: context,
+            builder: (context) => RemoveConfirmationDialog(place: place),
+          ),
         ),
       ],
     );

@@ -1,4 +1,5 @@
 import 'package:aplikasi_favoritesplaces/models/favoriteplaces_models.dart';
+import 'package:aplikasi_favoritesplaces/widgets/removeconfirmationdialog_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/favoritesplaces_provider.dart';
@@ -69,41 +70,6 @@ class ListFavoriteScreen extends ConsumerWidget {
     return const Center(child: CircularProgressIndicator());
   }
 
-  Widget _removeConfirmationDialog(
-    BuildContext context,
-    WidgetRef ref,
-    FavoritePlacesModels place,
-  ) {
-    return AlertDialog(
-      title: Text(
-        'Remove from Favorites',
-        style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-      ),
-      content: Text(
-        'Are you sure you want to remove ${place.name} from favorites?',
-        style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            ref
-                .read(favoritesPlacesProvider.notifier)
-                .removeFavoritePlace(place.id);
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('${place.name} removed from favorites')),
-            );
-          },
-          child: const Text('Remove'),
-        ),
-      ],
-    );
-  }
-
   void _navigateToDetail(BuildContext context, FavoritePlacesModels place) {
     Navigator.push(
       context,
@@ -116,10 +82,8 @@ class ListFavoriteScreen extends ConsumerWidget {
   Widget _buildBody(
     BuildContext context,
     WidgetRef ref,
-    List<FavoritePlacesModels> listPlaces,
+    AsyncValue<List<FavoritePlacesModels>> favoritesPlaces,
   ) {
-    final favoritesPlaces = ref.watch(favoritesPlacesProvider);
-
     return favoritesPlaces.when(
       data: (listPlaces) {
         if (listPlaces.isEmpty) {
@@ -156,8 +120,7 @@ class ListFavoriteScreen extends ConsumerWidget {
               onLongPress: () {
                 showDialog(
                   context: context,
-                  builder: (context) =>
-                      _removeConfirmationDialog(context, ref, place),
+                  builder: (context) => RemoveConfirmationDialog(place: place),
                 );
                 // Handle long press if needed
               },
@@ -176,7 +139,7 @@ class ListFavoriteScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: _buildAppBar(context, ref, favoritesPlaces.isLoading),
-      body: _buildBody(context, ref, favoritesPlaces.value ?? []),
+      body: _buildBody(context, ref, favoritesPlaces),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, AppsRoutes.addPlace),
         child: const Icon(Icons.add),

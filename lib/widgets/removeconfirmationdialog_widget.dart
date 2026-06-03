@@ -38,6 +38,7 @@ class RemoveConfirmationDialog extends ConsumerWidget {
               SnackBar(content: Text('${place.name} removed from favorites')),
             );
             Navigator.of(context).pop();
+            Navigator.of(context).pop();
           },
           child: const Text('Remove'),
         ),

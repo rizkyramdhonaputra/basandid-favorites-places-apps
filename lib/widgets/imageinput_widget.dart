@@ -3,15 +3,28 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ImageInput extends StatefulWidget {
-  const ImageInput({super.key});
+  const ImageInput({
+    super.key,
+    required this.imageSelected,
+    this.onImageSelected,
+  });
+
+  final File? imageSelected;
+  final ValueChanged<File?>? onImageSelected;
 
   @override
   State<ImageInput> createState() => _ImageInputState();
 }
 
 class _ImageInputState extends State<ImageInput> {
-  File? _placeImage;
   final _imagePicker = ImagePicker();
+  File? _selectedImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedImage = widget.imageSelected;
+  }
 
   Future<void> _pickGallery() async {
     final pickedFile = await _imagePicker.pickImage(
@@ -19,8 +32,9 @@ class _ImageInputState extends State<ImageInput> {
     );
     if (pickedFile != null) {
       setState(() {
-        _placeImage = File(pickedFile.path);
+        _selectedImage = File(pickedFile.path);
       });
+      widget.onImageSelected?.call(_selectedImage);
     }
   }
 
@@ -28,8 +42,9 @@ class _ImageInputState extends State<ImageInput> {
     final pickedFile = await _imagePicker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       setState(() {
-        _placeImage = File(pickedFile.path);
+        _selectedImage = File(pickedFile.path);
       });
+      widget.onImageSelected?.call(_selectedImage);
     }
   }
 
@@ -43,16 +58,94 @@ class _ImageInputState extends State<ImageInput> {
         border: Border.all(color: Colors.grey),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: _placeImage != null
+      child: _selectedImage != null
           ? Stack(
               children: [
                 GestureDetector(
                   onTap: () {
-                    _takePhoto(); // Allow user to retake photo on tap
-                    // Handle image tap if needed
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(
+                          'Change Photo',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        content: Text(
+                          'Do you want to retake the image?',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        actions: [
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  TextButton.icon(
+                                    onPressed: () {
+                                      Navigator.of(ctx).pop();
+                                      _takePhoto();
+                                    },
+                                    icon: Icon(
+                                      Icons.camera_alt,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
+                                    label: Text(
+                                      'Retake Photo',
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              TextButton.icon(
+                                onPressed: () {
+                                  Navigator.of(ctx).pop();
+                                  _pickGallery();
+                                },
+                                icon: Icon(
+                                  Icons.photo_library,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                label: Text(
+                                  'Pick from Gallery',
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Center(
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.of(ctx).pop();
+                              },
+                              child: Text(
+                                'Keep',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ); // Allow user to retake photo on tap
                   },
                   child: Image.file(
-                    _placeImage!,
+                    _selectedImage!,
                     width: double.infinity,
                     height: double.infinity,
                     fit: BoxFit.cover,
@@ -64,7 +157,8 @@ class _ImageInputState extends State<ImageInput> {
                   child: TextButton.icon(
                     onPressed: () {
                       setState(() {
-                        _placeImage = null;
+                        _selectedImage = null;
+                        widget.onImageSelected?.call(null);
                       });
                     },
                     icon: Icon(Icons.refresh_outlined, color: Colors.white),

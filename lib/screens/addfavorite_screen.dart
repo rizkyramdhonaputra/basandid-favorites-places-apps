@@ -147,7 +147,14 @@ class _AddFavoriteScreenState extends ConsumerState<AddFavoriteScreen> {
             const SizedBox(height: 16),
             _buildRatingField(),
             const SizedBox(height: 32),
-            ImageInput(),
+            ImageInput(
+              imageSelected: _placeImage,
+              onImageSelected: (image) {
+                setState(() {
+                  _placeImage = image;
+                });
+              },
+            ),
             const SizedBox(height: 16),
             LocationInput(),
             const SizedBox(height: 32), // Add the LocationInput widget here
